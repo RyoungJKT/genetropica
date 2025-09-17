@@ -23,6 +23,10 @@ from src.transforms import (
     compute_dominant_serotype,
     SEROTYPE_PALETTE
 )
+from src.charts import (
+    create_serotype_stacked_area,
+    create_cases_climate_dual_axis
+)
 
 
 def create_choropleth_map(df_month, gdf, selected_provinces):
@@ -110,13 +114,13 @@ def create_choropleth_map(df_month, gdf, selected_provinces):
         center={"lat": -6.5, "lon": 107.0},
         projection_scale=25,
         showcountries=True,
-        countrycolor="lightgray",
+        countrycolor="#CCCCCC",
         showcoastlines=True,
-        coastlinecolor="lightgray",
+        coastlinecolor="#999999",
         showland=True,
-        landcolor="#f0f0f0",
+        landcolor="#FAFAFA",
         showocean=True,
-        oceancolor="#e6f2ff",
+        oceancolor="#E8F4F8",
         fitbounds="locations",
         visible=True
     )
@@ -131,13 +135,18 @@ def create_choropleth_map(df_month, gdf, selected_provinces):
             yanchor="middle",
             y=0.5,
             xanchor="left",
-            x=1.02
+            x=1.02,
+            bgcolor="rgba(255,255,255,0.8)",
+            bordercolor="#CCCCCC",
+            borderwidth=1
         ),
         geo=dict(
             showframe=True,
             showcoastlines=True,
             projection_type='natural earth'
-        )
+        ),
+        paper_bgcolor='white',
+        plot_bgcolor='white'
     )
     
     return fig
@@ -212,19 +221,21 @@ def create_simple_scatter_map(df_month, gdf, selected_provinces):
         center={"lat": -6.5, "lon": 107.0},
         projection_scale=5,
         showcountries=True,
-        countrycolor="lightgray",
+        countrycolor="#CCCCCC",
         showcoastlines=True,
-        coastlinecolor="lightgray",
+        coastlinecolor="#999999",
         showland=True,
-        landcolor="#f0f0f0",
+        landcolor="#FAFAFA",
         showocean=True,
-        oceancolor="#e6f2ff",
+        oceancolor="#E8F4F8",
         fitbounds="locations"
     )
     
     fig.update_layout(
         height=600,
-        margin={"r": 0, "t": 40, "l": 0, "b": 0}
+        margin={"r": 0, "t": 40, "l": 0, "b": 0},
+        paper_bgcolor='white',
+        plot_bgcolor='white'
     )
     
     return fig
@@ -413,6 +424,61 @@ def main():
                         f"</div>",
                         unsafe_allow_html=True
                     )
+            
+            # Trends and Climate Analysis Section
+            st.markdown("---")
+            st.header("📈 Trends & Climate Analysis")
+            
+            # Add smoothing option and lag slider in columns
+            control_col1, control_col2, control_col3 = st.columns([1, 1, 2])
+            
+            with control_col1:
+                smooth_data = st.checkbox("Smooth serotype data", value=False, 
+                                         help="Apply 3-month rolling average to serotype composition")
+            
+            with control_col2:
+                lag_months = st.slider("Rainfall lag (months)", 
+                                      min_value=0, max_value=3, value=0,
+                                      help="Shift rainfall data to find lagged correlations")
+            
+            # Two column layout for charts
+            chart_col1, chart_col2 = st.columns(2)
+            
+            with chart_col1:
+                st.subheader("Serotype Composition Over Time")
+                
+                # Create stacked area chart
+                fig_serotype = create_serotype_stacked_area(
+                    df_filtered,
+                    SEROTYPE_PALETTE,
+                    smooth=smooth_data,
+                    window=3
+                )
+                st.plotly_chart(fig_serotype, use_container_width=True)
+                
+                # Validation note
+                st.caption("📊 Stacked areas sum to 100% at each time point")
+            
+            with chart_col2:
+                st.subheader("Cases vs Climate Variables")
+                
+                # Create dual-axis chart
+                fig_climate, rainfall_corr, temp_corr = create_cases_climate_dual_axis(
+                    df_filtered,
+                    lag_months=lag_months
+                )
+                st.plotly_chart(fig_climate, use_container_width=True)
+                
+                # Display correlations
+                st.caption(f"📊 Correlations with cases:")
+                corr_col1, corr_col2 = st.columns(2)
+                with corr_col1:
+                    corr_text = f"Rainfall (lag {lag_months}mo): **{rainfall_corr:.3f}**" if not pd.isna(rainfall_corr) else "Rainfall: No data"
+                    st.caption(f"💧 {corr_text}")
+                with corr_col2:
+                    temp_text = f"Temperature: **{temp_corr:.3f}**" if not pd.isna(temp_corr) else "Temperature: No data"
+                    st.caption(f"🌡️ {temp_text}")
+            
         else:
             st.warning("No data available for the selected filters.")
     else:
