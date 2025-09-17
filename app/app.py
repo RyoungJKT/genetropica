@@ -257,7 +257,7 @@ def main():
     )
     
     # Main title
-    st.title("GeneTropica — Dengue · Climate · Forecast (MVP)")
+    st.title("GeneTropica — Dengue · Climate · Forecast (MVP) by Russell J. Young")
     
     # Load data
     try:
@@ -643,6 +643,135 @@ def main():
                 st.error(f"Error generating forecast: {str(e)}")
                 st.info("This may happen with limited data. Try selecting different provinces or date ranges.")
             
+            # Phylogenetics Section
+            st.markdown("---")
+            with st.expander("🧬 Phylogenetics (Coming Soon)"):
+                col_phylo1, col_phylo2 = st.columns([1, 2])
+                
+                with col_phylo1:
+                    # Display placeholder image
+                    try:
+                        from PIL import Image
+                        phylo_img_path = Path(__file__).parent.parent / "assets" / "phylo_placeholder.png"
+                        if phylo_img_path.exists():
+                            img = Image.open(phylo_img_path)
+                            st.image(img, caption="Phylogenetic Tree Visualization (Placeholder)", use_container_width=True)
+                        else:
+                            st.info("Phylogenetic tree visualization will appear here")
+                    except:
+                        st.info("Phylogenetic tree visualization will appear here")
+                
+                with col_phylo2:
+                    st.markdown("""
+                    ### Planned Phylogenetic Analysis Pipeline
+                    
+                    **Coming in future versions:**
+                    
+                    1. **Sequence Alignment** (MAFFT)
+                       - Multiple sequence alignment of dengue genomes
+                       - Automatic detection of serotype-specific regions
+                    
+                    2. **Quality Control** (Nextclade)
+                       - Sequence quality assessment
+                       - Clade assignment and mutation calling
+                       - Detection of potential sequencing errors
+                    
+                    3. **Tree Construction** (IQ-TREE)
+                       - Maximum likelihood phylogenetic inference
+                       - Model selection and bootstrap support
+                       - Serotype-specific tree generation
+                    
+                    4. **Temporal Analysis** (TreeTime)
+                       - Molecular clock calibration
+                       - Ancestral state reconstruction
+                       - Transmission cluster identification
+                    
+                    5. **Visualization** (Nextstrain/Auspice)
+                       - Interactive tree exploration
+                       - Geographic and temporal mapping
+                       - Mutation tracking across lineages
+                    """)
+                
+                st.markdown("---")
+                
+                # Auspice JSON uploader
+                st.markdown("### 📁 Auspice JSON Preview (Experimental)")
+                st.markdown("Upload a Nextstrain Auspice JSON file to preview metadata:")
+                
+                uploaded_file = st.file_uploader(
+                    "Choose an Auspice JSON file",
+                    type=['json'],
+                    key='auspice_upload',
+                    help="Upload a Nextstrain Auspice JSON for basic metadata preview"
+                )
+                
+                if uploaded_file is not None:
+                    try:
+                        # Read and parse JSON
+                        import json
+                        import tempfile
+                        import os
+                        
+                        json_content = json.loads(uploaded_file.read())
+                        
+                        # Save to temp file
+                        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+                            json.dump(json_content, tmp_file)
+                            temp_path = tmp_file.name
+                        
+                        st.success(f"✅ File uploaded successfully and saved to temporary location")
+                        
+                        # Extract basic metadata
+                        metadata = {}
+                        
+                        # Check for tree structure
+                        if 'tree' in json_content:
+                            def count_nodes(node):
+                                count = 1
+                                if 'children' in node:
+                                    for child in node['children']:
+                                        count += count_nodes(child)
+                                return count
+                            
+                            metadata['Total nodes'] = count_nodes(json_content['tree'])
+                        
+                        # Check for metadata
+                        if 'meta' in json_content:
+                            meta = json_content['meta']
+                            if 'title' in meta:
+                                metadata['Title'] = meta['title']
+                            if 'updated' in meta:
+                                metadata['Last updated'] = meta['updated']
+                            if 'panels' in meta:
+                                metadata['Panels'] = ', '.join(meta['panels'])
+                            if 'genome_annotations' in meta:
+                                metadata['Genome annotations'] = len(meta['genome_annotations'])
+                        
+                        # Display metadata
+                        if metadata:
+                            st.markdown("**File Metadata:**")
+                            for key, value in metadata.items():
+                                st.write(f"- {key}: {value}")
+                        
+                        # Provide link to external viewer
+                        st.info("""
+                        💡 **View in Auspice:**
+                        To fully explore this phylogenetic tree, use the Nextstrain Auspice viewer:
+                        1. Visit [auspice.us](https://auspice.us)
+                        2. Drag and drop your JSON file
+                        3. Explore the interactive tree with full functionality
+                        """)
+                        
+                        # Clean up temp file after displaying (optional)
+                        # os.unlink(temp_path)  # Uncomment to delete immediately
+                        
+                    except json.JSONDecodeError:
+                        st.error("Invalid JSON file. Please upload a valid Auspice JSON.")
+                    except Exception as e:
+                        st.error(f"Error processing file: {str(e)}")
+                else:
+                    st.info("No file uploaded yet. Upload an Auspice JSON to see metadata preview.")
+            
         else:
             st.warning("No data available for the selected filters.")
     else:
@@ -650,7 +779,7 @@ def main():
     
     # Footer
     st.divider()
-    st.caption("GeneTropica MVP - Version 0.1.0 | Data updated through mock generation")
+    st.caption("GeneTropica MVP - Version 0.1.0 by Russell J. Young &copy; 2025 | Data updated through mock generation")
 
 
 if __name__ == "__main__":
