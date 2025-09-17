@@ -55,6 +55,31 @@ genetropica/
     └── methods.md     # Methodology documentation
 ```
 
+## Mock Data
+
+The application includes a mock data generator for demonstration purposes. To generate sample data for 6 Indonesian provinces:
+
+```bash
+# Make sure environment is activated
+conda activate genetropica
+
+# Generate mock datasets
+python -m src.data_io --make-mock
+```
+
+This creates the following files in `data/mock/`:
+- `provinces.geojson` - Geographic boundaries for 6 provinces
+- `dengue_cases.csv` - Monthly dengue case counts (2017-present)
+- `serotype_share.csv` - Distribution of dengue serotypes (DENV1-4)
+- `climate.csv` - Monthly rainfall and temperature data
+- `features.csv` - Combined dataset with all features
+
+The mock data includes:
+- Realistic seasonal patterns (monsoon season Nov-Mar)
+- Temperature variations (26-30°C)
+- Province-specific dengue serotype distributions
+- Temporal trends and random variations
+
 ## Development
 
 To contribute to this project:
@@ -64,8 +89,8 @@ To contribute to this project:
 
 ## License
 
-Russell Young
+[Your License Here]
 
 ## Contact
 
-ryoung.jkt@gmail.com
+[Your Contact Information]

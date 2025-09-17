@@ -1,0 +1,221 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "province_id": "DKI",
+        "province_name": "DKI Jakarta",
+        "lon": 106.8456,
+        "lat": -6.2088
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              106.5956,
+              -6.4588
+            ],
+            [
+              107.0956,
+              -6.4588
+            ],
+            [
+              107.0956,
+              -5.9588
+            ],
+            [
+              106.5956,
+              -5.9588
+            ],
+            [
+              106.5956,
+              -6.4588
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "province_id": "JABAR",
+        "province_name": "West Java",
+        "lon": 107.6098,
+        "lat": -6.9147
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              107.3598,
+              -7.1647
+            ],
+            [
+              107.8598,
+              -7.1647
+            ],
+            [
+              107.8598,
+              -6.6647
+            ],
+            [
+              107.3598,
+              -6.6647
+            ],
+            [
+              107.3598,
+              -7.1647
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "province_id": "JATENG",
+        "province_name": "Central Java",
+        "lon": 110.4203,
+        "lat": -7.1506
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              110.1703,
+              -7.4006
+            ],
+            [
+              110.6703,
+              -7.4006
+            ],
+            [
+              110.6703,
+              -6.9006
+            ],
+            [
+              110.1703,
+              -6.9006
+            ],
+            [
+              110.1703,
+              -7.4006
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "province_id": "JATIM",
+        "province_name": "East Java",
+        "lon": 112.6349,
+        "lat": -7.5361
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              112.3849,
+              -7.7861
+            ],
+            [
+              112.8849,
+              -7.7861
+            ],
+            [
+              112.8849,
+              -7.2861
+            ],
+            [
+              112.3849,
+              -7.2861
+            ],
+            [
+              112.3849,
+              -7.7861
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "province_id": "BANTEN",
+        "province_name": "Banten",
+        "lon": 106.064,
+        "lat": -6.4058
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              105.814,
+              -6.6558
+            ],
+            [
+              106.314,
+              -6.6558
+            ],
+            [
+              106.314,
+              -6.1558
+            ],
+            [
+              105.814,
+              -6.1558
+            ],
+            [
+              105.814,
+              -6.6558
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "province_id": "DIY",
+        "province_name": "Yogyakarta",
+        "lon": 110.3695,
+        "lat": -7.7956
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              110.1195,
+              -8.0456
+            ],
+            [
+              110.6195,
+              -8.0456
+            ],
+            [
+              110.6195,
+              -7.5456
+            ],
+            [
+              110.1195,
+              -7.5456
+            ],
+            [
+              110.1195,
+              -8.0456
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
