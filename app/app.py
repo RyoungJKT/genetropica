@@ -27,6 +27,10 @@ from src.charts import (
     create_serotype_stacked_area,
     create_cases_climate_dual_axis
 )
+from src.forecast import (
+    make_forecast,
+    backtest_forecast
+)
 
 
 def create_choropleth_map(df_month, gdf, selected_provinces):
@@ -478,6 +482,166 @@ def main():
                 with corr_col2:
                     temp_text = f"Temperature: **{temp_corr:.3f}**" if not pd.isna(temp_corr) else "Temperature: No data"
                     st.caption(f"🌡️ {temp_text}")
+            
+            # Forecast Section
+            st.markdown("---")
+            st.header("📊 Forecast (Prototype)")
+            
+            # Disclaimer
+            st.warning("""
+            ⚠️ **Educational Prototype Disclaimer**
+            
+            This forecast is a simple statistical model for educational purposes only. 
+            It is NOT intended for clinical decision-making or public health planning.
+            Always consult qualified health professionals for medical advice.
+            """)
+            
+            # Forecast controls
+            forecast_col1, forecast_col2, forecast_col3 = st.columns([1, 1, 2])
+            
+            with forecast_col1:
+                forecast_horizon = st.slider(
+                    "Forecast horizon (months)",
+                    min_value=1,
+                    max_value=3,
+                    value=2,
+                    help="Number of months to forecast ahead"
+                )
+            
+            with forecast_col2:
+                forecast_lag = st.selectbox(
+                    "Rainfall lag for model",
+                    options=[1, 2],
+                    help="Lag months for rainfall effect in the model"
+                )
+            
+            # Generate forecast
+            try:
+                # Get forecast
+                forecast_df = make_forecast(
+                    df_filtered,
+                    horizon_months=forecast_horizon,
+                    rainfall_lag=forecast_lag
+                )
+                
+                # Get backtest metrics
+                metrics = backtest_forecast(
+                    df_filtered,
+                    test_months=min(12, len(df_filtered) // 2),
+                    rainfall_lag=forecast_lag
+                )
+                
+                # Prepare data for visualization
+                # Get last 12 months of actuals
+                last_12_months = df_filtered.tail(12).copy()
+                last_12_months = last_12_months.groupby(last_12_months.index).agg({
+                    'cases': 'sum'
+                })
+                
+                # Create forecast visualization
+                fig_forecast = go.Figure()
+                
+                # Add actual cases
+                fig_forecast.add_trace(go.Scatter(
+                    x=last_12_months.index,
+                    y=last_12_months['cases'],
+                    mode='lines+markers',
+                    name='Actual Cases',
+                    line=dict(color='#2E86AB', width=2),
+                    marker=dict(size=6)
+                ))
+                
+                # Add forecast with confidence interval
+                if len(forecast_df) > 0:
+                    # Add forecast line
+                    fig_forecast.add_trace(go.Scatter(
+                        x=forecast_df['date'],
+                        y=forecast_df['yhat'],
+                        mode='lines+markers',
+                        name='Forecast',
+                        line=dict(color='#A23B72', width=2, dash='dash'),
+                        marker=dict(size=6)
+                    ))
+                    
+                    # Add confidence interval
+                    x_area = list(forecast_df['date']) + list(forecast_df['date'][::-1])
+                    y_area = list(forecast_df['yhat_upper']) + list(forecast_df['yhat_lower'][::-1])
+                    
+                    fig_forecast.add_trace(go.Scatter(
+                        x=x_area,
+                        y=y_area,
+                        fill='toself',
+                        fillcolor='rgba(162, 59, 114, 0.2)',
+                        line=dict(color='rgba(162, 59, 114, 0)'),
+                        name='95% Confidence Interval',
+                        showlegend=True,
+                        hoverinfo='skip'
+                    ))
+                    
+                    # Connect actual to forecast with a dotted line
+                    if len(last_12_months) > 0 and len(forecast_df) > 0:
+                        fig_forecast.add_trace(go.Scatter(
+                            x=[last_12_months.index[-1], forecast_df['date'].iloc[0]],
+                            y=[last_12_months['cases'].iloc[-1], forecast_df['yhat'].iloc[0]],
+                            mode='lines',
+                            line=dict(color='gray', width=1, dash='dot'),
+                            showlegend=False,
+                            hoverinfo='skip'
+                        ))
+                
+                # Update layout
+                fig_forecast.update_layout(
+                    title="Dengue Cases Forecast",
+                    xaxis_title="Date",
+                    yaxis_title="Cases",
+                    hovermode='x unified',
+                    showlegend=True,
+                    height=400,
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    xaxis=dict(
+                        gridcolor='#E0E0E0',
+                        showgrid=True,
+                        zeroline=False
+                    ),
+                    yaxis=dict(
+                        gridcolor='#E0E0E0',
+                        showgrid=True,
+                        zeroline=False
+                    )
+                )
+                
+                # Display forecast chart
+                st.plotly_chart(fig_forecast, use_container_width=True)
+                
+                # Display metrics
+                col_metric1, col_metric2, col_metric3 = st.columns(3)
+                
+                with col_metric1:
+                    mae_val = metrics.get('mae', np.nan)
+                    if not pd.isna(mae_val):
+                        st.metric("MAE (Backtest)", f"{mae_val:.1f} cases")
+                    else:
+                        st.metric("MAE (Backtest)", "Insufficient data")
+                
+                with col_metric2:
+                    rmse_val = metrics.get('rmse', np.nan)
+                    if not pd.isna(rmse_val):
+                        st.metric("RMSE (Backtest)", f"{rmse_val:.1f} cases")
+                    else:
+                        st.metric("RMSE (Backtest)", "Insufficient data")
+                
+                with col_metric3:
+                    n_tests = metrics.get('n_tests', 0)
+                    st.metric("Backtest Samples", f"{n_tests} months")
+                
+                # Model description
+                if len(forecast_df) > 0:
+                    st.info(f"**Model:** {forecast_df.iloc[0]['model_notes']}")
+                
+            except Exception as e:
+                st.error(f"Error generating forecast: {str(e)}")
+                st.info("This may happen with limited data. Try selecting different provinces or date ranges.")
             
         else:
             st.warning("No data available for the selected filters.")
