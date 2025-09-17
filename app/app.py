@@ -12,6 +12,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime
 import json
+import io
 
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -31,6 +32,14 @@ from src.forecast import (
     make_forecast,
     backtest_forecast
 )
+
+
+@st.cache_resource
+def get_fitted_model_params(df: pd.DataFrame):
+    """Cache expensive model fitting operations."""
+    # This would cache any expensive model parameters
+    # Currently placeholder for future optimization
+    return {"cached": True, "timestamp": datetime.now()}
 
 
 def create_choropleth_map(df_month, gdf, selected_provinces):
@@ -248,7 +257,7 @@ def create_simple_scatter_map(df_month, gdf, selected_provinces):
 def main():
     """Main application entry point."""
     
-    # Page configuration
+    # Page configuration - MUST BE FIRST ST COMMAND
     st.set_page_config(
         page_title="GeneTropica",
         page_icon="🦟",
@@ -256,13 +265,67 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    # Main title
-    st.title("GeneTropica — Dengue · Climate · Forecast (MVP) by Russell J. Young")
+    # Custom CSS for better styling and WCAG compliance
+    st.markdown("""
+    <style>
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    .ksp-item {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 500;
+        text-align: center;
+        display: block;
+        white-space: nowrap;
+    }
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.9rem;
+        margin-right: 0.5rem;
+    }
+    .province-badge {
+        background-color: #E8F4F8;
+        color: #2C3E50;
+        border: 1px solid #BDC3C7;
+    }
+    .month-badge {
+        background-color: #FFF5E6;
+        color: #8B4513;
+        border: 1px solid #D2691E;
+    }
+    </style>
+    """, unsafe_allow_html=True)
     
-    # Load data
+    # Main title with custom styling
+    st.markdown('<h1 class="main-header">🦟 GeneTropica — Dengue · Climate · Forecast (MVP) by Russell J. Young</h1>', 
+                unsafe_allow_html=True)
+    
+    # Key Selling Points (KSPs) using Streamlit columns for better alignment
+    ksp_col1, ksp_col2, ksp_col3 = st.columns(3)
+    
+    with ksp_col1:
+        st.markdown('<div class="ksp-item">🧬 Serotypes/Lineages</div>', unsafe_allow_html=True)
+    
+    with ksp_col2:
+        st.markdown('<div class="ksp-item">🌡️ Climate Correlation</div>', unsafe_allow_html=True)
+    
+    with ksp_col3:
+        st.markdown('<div class="ksp-item">📈 Forecast Models</div>', unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)  # Add spacing after KSPs
+    
+    # Load data with caching
     try:
-        gdf = load_geo()
-        df = load_features()
+        with st.spinner('Loading data...'):
+            gdf = load_geo()
+            df = load_features()
         
         # Get date range from data
         min_year = df.index.year.min()
@@ -274,7 +337,7 @@ def main():
         st.info("Please run `python -m src.data_io --make-mock` to generate mock data.")
         return
     
-    # Sidebar filters
+    # Sidebar
     with st.sidebar:
         st.header("🔍 Filters")
         
@@ -325,7 +388,46 @@ def main():
         )
         
         st.divider()
-        st.caption("Data filters update the map in real-time")
+        
+        # Sources & Ethics section
+        with st.expander("📚 Sources & Ethics"):
+            st.markdown("""
+            ### Data Sources
+            
+            **⚠️ Mock Data Notice**
+            
+            This demo currently uses **synthetic mock data** for demonstration purposes. 
+            The data is programmatically generated to show realistic patterns but does not 
+            represent actual dengue cases or climate measurements.
+            
+            ### Future Data Plans
+            
+            We plan to integrate real public health data from:
+            - **WHO**: Global dengue surveillance data
+            - **BMKG**: Indonesian meteorological data
+            - **Ministry of Health**: Provincial case reports
+            - **GISAID/GenBank**: Genetic sequences
+            
+            ### Ethical Considerations
+            
+            - **Privacy**: No patient-identifiable information
+            - **Transparency**: Clear labeling of data sources
+            - **Accuracy**: Validation against published studies
+            - **Access**: Open-source code and public data only
+            
+            ### Responsible Use
+            
+            This tool is for **educational and research purposes only**.
+            Not intended for clinical decision-making.
+            
+            ### Contact
+            
+            For questions about data or methods:
+            genetropica@example.com
+            """)
+        
+        st.divider()
+        st.caption("Data filters update visualizations in real-time")
     
     # Filter data based on selections
     if selected_provinces and selected_serotypes:
@@ -341,6 +443,18 @@ def main():
             
         # Get available months after filtering
         available_months_filtered = df_filtered.index.unique().sort_values()
+        
+        # Helper badges showing current selection
+        badge_col1, badge_col2, badge_col3 = st.columns([2, 2, 6])
+        with badge_col1:
+            provinces_text = f"{len(selected_provinces)} province{'s' if len(selected_provinces) != 1 else ''}"
+            st.markdown(f'<span class="status-badge province-badge">📍 {provinces_text} selected</span>', 
+                       unsafe_allow_html=True)
+        
+        with badge_col2:
+            year_text = f"{year_range[0]}–{year_range[1]}"
+            st.markdown(f'<span class="status-badge month-badge">📅 Years: {year_text}</span>', 
+                       unsafe_allow_html=True)
         
         # Main content area
         st.header("🗺️ Dengue Serotype Distribution Map")
@@ -372,6 +486,23 @@ def main():
             # Get data for selected month
             df_month = df_filtered[df_filtered.index == selected_month]
             
+            # Download button for filtered data
+            col_map, col_download = st.columns([5, 1])
+            
+            with col_download:
+                # Prepare CSV for download
+                csv_buffer = io.StringIO()
+                df_filtered.to_csv(csv_buffer, index=True)
+                csv_data = csv_buffer.getvalue()
+                
+                st.download_button(
+                    label="📥 Download Data",
+                    data=csv_data,
+                    file_name=f"genetropica_data_{selected_month.strftime('%Y%m')}.csv",
+                    mime="text/csv",
+                    help="Download the filtered dataset as CSV"
+                )
+            
             # Create two columns for map and stats
             col1, col2 = st.columns([3, 1])
             
@@ -383,12 +514,6 @@ def main():
                     fig = create_simple_scatter_map(df_month, gdf, selected_provinces)
                 
                 st.plotly_chart(fig, use_container_width=True)
-                
-                # Debug info (can be removed later)
-                with st.expander("🔧 Debug Info"):
-                    st.write("Selected provinces:", selected_provinces)
-                    st.write("Data points for month:", len(df_month))
-                    st.write("Province centers:", gdf[['province_id', 'lon', 'lat']].to_dict('records'))
             
             with col2:
                 # Display statistics for selected month
@@ -415,7 +540,7 @@ def main():
                 else:
                     st.info("No data for selected filters")
             
-            # Legend for serotype colors
+            # Legend for serotype colors with WCAG compliant colors
             st.markdown("---")
             st.markdown("### 🎨 Serotype Color Legend")
             legend_cols = st.columns(4)
@@ -515,7 +640,7 @@ def main():
                     help="Lag months for rainfall effect in the model"
                 )
             
-            # Generate forecast
+            # Generate forecast with caching
             try:
                 # Get forecast
                 forecast_df = make_forecast(
@@ -762,9 +887,6 @@ def main():
                         3. Explore the interactive tree with full functionality
                         """)
                         
-                        # Clean up temp file after displaying (optional)
-                        # os.unlink(temp_path)  # Uncomment to delete immediately
-                        
                     except json.JSONDecodeError:
                         st.error("Invalid JSON file. Please upload a valid Auspice JSON.")
                     except Exception as e:
@@ -779,7 +901,7 @@ def main():
     
     # Footer
     st.divider()
-    st.caption("GeneTropica MVP - Version 0.1.0 by Russell J. Young &copy; 2025 | Data updated through mock generation")
+    st.caption("GeneTropica MVP - Version 0.1.0 | Developed by Russell J. Young | Data updated through mock generation")
 
 
 if __name__ == "__main__":
