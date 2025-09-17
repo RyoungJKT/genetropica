@@ -85,7 +85,7 @@ def get_data_path(subpath: str = "") -> Path:
 def create_mock_provinces_geojson() -> Dict:
     """
     Create simplified GeoJSON for 6 Indonesian provinces.
-    Using rectangular polygons centered on actual coordinates.
+    Using larger, overlapping rectangular polygons for better visibility.
     """
     provinces = [
         {"id": "DKI", "name": "DKI Jakarta", "lon": 106.8456, "lat": -6.2088},
@@ -98,15 +98,24 @@ def create_mock_provinces_geojson() -> Dict:
     
     features = []
     for prov in provinces:
-        # Create a simple rectangular polygon around the center point
-        # Roughly 0.5 degrees wide/tall for simplicity
+        # Create larger rectangular polygons
+        # Using 3x3 degree boxes for clear visibility
         lon, lat = prov["lon"], prov["lat"]
+        
+        # Make rectangles of different sizes to avoid complete overlap
+        if prov["id"] == "DKI":
+            size = 1.5  # Smaller for Jakarta
+        elif prov["id"] == "DIY":
+            size = 1.2  # Smaller for Yogyakarta
+        else:
+            size = 2.0  # Larger for other provinces
+        
         coordinates = [[
-            [lon - 0.25, lat - 0.25],
-            [lon + 0.25, lat - 0.25],
-            [lon + 0.25, lat + 0.25],
-            [lon - 0.25, lat + 0.25],
-            [lon - 0.25, lat - 0.25]  # Close the polygon
+            [lon - size/2, lat - size/2],
+            [lon + size/2, lat - size/2],
+            [lon + size/2, lat + size/2],
+            [lon - size/2, lat + size/2],
+            [lon - size/2, lat - size/2]  # Close the polygon
         ]]
         
         feature = {

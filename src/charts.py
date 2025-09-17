@@ -86,7 +86,16 @@ def create_serotype_stacked_area(df: pd.DataFrame,
             x=1
         ),
         height=400,
-        margin=dict(l=50, r=20, t=70, b=50)
+        margin=dict(l=50, r=20, t=70, b=50),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        xaxis=dict(
+            gridcolor='#E0E0E0',
+            showgrid=True,
+            zeroline=False
+        ),
+        yaxis_gridcolor='#E0E0E0',
+        yaxis_showgrid=True
     )
     
     return fig
@@ -131,36 +140,36 @@ def create_cases_climate_dual_axis(df: pd.DataFrame,
     # Create figure with secondary y-axis
     fig = go.Figure()
     
-    # Add cases as bars (primary y-axis)
+    # Add cases as bars (primary y-axis) - using a purple/violet shade
     fig.add_trace(go.Bar(
         x=monthly.index,
         y=monthly['cases'],
         name='Cases',
-        marker_color='rgba(99, 110, 250, 0.6)',
+        marker_color='rgba(147, 51, 234, 0.7)',  # Purple violet
         yaxis='y',
         hovertemplate='Cases: %{y:,.0f}<extra></extra>'
     ))
     
-    # Add rainfall line (secondary y-axis)
+    # Add rainfall line (secondary y-axis) - using blue
     fig.add_trace(go.Scatter(
         x=monthly.index,
         y=rainfall_lagged if lag_months > 0 else monthly['rainfall_mm'],
         mode='lines+markers',
         name=f'Rainfall{f" (lag {lag_months}mo)" if lag_months > 0 else ""}',
-        line=dict(color='#00CED1', width=2),
-        marker=dict(size=6),
+        line=dict(color='#0EA5E9', width=3),  # Sky blue
+        marker=dict(size=7, color='#0EA5E9', line=dict(width=1, color='white')),
         yaxis='y2',
         hovertemplate='Rainfall: %{y:.1f} mm<extra></extra>'
     ))
     
-    # Add temperature line (secondary y-axis)
+    # Add temperature line (secondary y-axis) - using orange/coral
     fig.add_trace(go.Scatter(
         x=monthly.index,
         y=monthly['temperature_c'],
         mode='lines+markers',
         name='Temperature',
-        line=dict(color='#FF6347', width=2),
-        marker=dict(size=6),
+        line=dict(color='#FB923C', width=3, dash='dot'),  # Orange with dotted line
+        marker=dict(size=7, symbol='diamond', color='#FB923C', line=dict(width=1, color='white')),
         yaxis='y2',
         hovertemplate='Temperature: %{y:.1f} °C<extra></extra>'
     ))
@@ -171,16 +180,20 @@ def create_cases_climate_dual_axis(df: pd.DataFrame,
         xaxis_title="Date",
         yaxis=dict(
             title="Cases",
-            title_font=dict(color='#636EFA'),
-            tickfont=dict(color='#636EFA'),
-            side='left'
+            title_font=dict(color='#9333EA'),  # Purple to match bars
+            tickfont=dict(color='#9333EA'),
+            side='left',
+            gridcolor='#E5E7EB',
+            showgrid=True
         ),
         yaxis2=dict(
             title="Climate (mm / °C)",
-            title_font=dict(color='#00CED1'),
-            tickfont=dict(color='#00CED1'),
+            title_font=dict(color='#0EA5E9'),  # Blue to match rainfall
+            tickfont=dict(color='#059669'),  # Green for balance
             overlaying='y',
-            side='right'
+            side='right',
+            gridcolor='#F3F4F6',
+            showgrid=False
         ),
         hovermode='x unified',
         showlegend=True,
@@ -189,10 +202,20 @@ def create_cases_climate_dual_axis(df: pd.DataFrame,
             yanchor="bottom",
             y=1.02,
             xanchor="right",
-            x=1
+            x=1,
+            bgcolor="rgba(255,255,255,0.8)",
+            bordercolor="#E5E7EB",
+            borderwidth=1
         ),
         height=400,
-        margin=dict(l=50, r=50, t=70, b=50)
+        margin=dict(l=50, r=50, t=70, b=50),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        xaxis=dict(
+            gridcolor='#E5E7EB',
+            showgrid=True,
+            zeroline=False
+        )
     )
     
     return fig, rainfall_corr, temp_corr

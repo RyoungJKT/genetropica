@@ -124,8 +124,8 @@ def create_choropleth_map(df_month, gdf, selected_provinces):
     
     # Update layout for Indonesia focus with better zoom
     fig.update_geos(
-        center={"lat": -6.5, "lon": 107.0},
-        projection_scale=25,
+        center={"lat": -7.0, "lon": 110.0},
+        projection_scale=8,  # Reduced from 25 for better view
         showcountries=True,
         countrycolor="#CCCCCC",
         showcoastlines=True,
@@ -135,7 +135,9 @@ def create_choropleth_map(df_month, gdf, selected_provinces):
         showocean=True,
         oceancolor="#E8F4F8",
         fitbounds="locations",
-        visible=True
+        visible=True,
+        resolution=50,  # Higher resolution
+        scope="asia"    # Focus on Asia
     )
     
     fig.update_layout(
@@ -304,7 +306,7 @@ def main():
     """, unsafe_allow_html=True)
     
     # Main title with custom styling
-    st.markdown('<h1 class="main-header">🦟 GeneTropica — Dengue · Climate · Forecast (MVP) by Russell J. Young</h1>', 
+    st.markdown('<h1 class="main-header">🦟 GeneTropica — Dengue · Climate · Forecast (MVP) by Russell Young</h1>', 
                 unsafe_allow_html=True)
     
     # Key Selling Points (KSPs) using Streamlit columns for better alignment
@@ -383,8 +385,9 @@ def main():
         # Map type selector
         map_type = st.radio(
             "Map Type",
-            options=["Choropleth", "Bubble Map"],
-            help="Choose visualization type"
+            options=["Bubble Map", "Choropleth"],
+            index=0,  # Default to Bubble Map
+            help="Bubble map recommended - shows all provinces clearly"
         )
         
         st.divider()
@@ -508,10 +511,10 @@ def main():
             
             with col1:
                 # Create and display the map based on selection
-                if map_type == "Choropleth":
-                    fig = create_choropleth_map(df_month, gdf, selected_provinces)
-                else:
+                if map_type == "Bubble Map":
                     fig = create_simple_scatter_map(df_month, gdf, selected_provinces)
+                else:
+                    fig = create_choropleth_map(df_month, gdf, selected_provinces)
                 
                 st.plotly_chart(fig, use_container_width=True)
             
@@ -901,7 +904,7 @@ def main():
     
     # Footer
     st.divider()
-    st.caption("GeneTropica MVP - Version 0.1.0 | Developed by Russell J. Young | Data updated through mock generation")
+    st.caption("GeneTropica MVP - Version 0.1.0 | Developed by Russell Young | Data updated through mock generation")
 
 
 if __name__ == "__main__":
