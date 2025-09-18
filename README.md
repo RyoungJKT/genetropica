@@ -30,7 +30,7 @@ GeneTropica is an open-source dashboard that combines dengue serotype distributi
 
 ```bash
 # Clone repository
-git clone https://github.com/darwins3/genetropica.git
+git clone https://github.com/RyoungJKT/genetropica.git
 cd genetropica
 
 # Create conda environment
@@ -177,7 +177,7 @@ If you use GeneTropica in your research:
 @software{genetropica2024,
   title = {GeneTropica: Dengue Surveillance Platform},
   year = {2024},
-  url = {https://github.com/darwins3/genetropica}
+  url = {https://github.com/RyoungJKT/genetropica}
 }
 ```
 
