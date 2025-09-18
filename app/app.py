@@ -45,6 +45,7 @@ def get_fitted_model_params(df: pd.DataFrame):
 def create_choropleth_map(df_month, gdf, selected_provinces):
     """
     Create a Plotly choropleth map colored by dominant serotype.
+    Falls back to scatter map if GeoJSON not available.
     
     Args:
         df_month: DataFrame for a specific month
@@ -54,6 +55,13 @@ def create_choropleth_map(df_month, gdf, selected_provinces):
     Returns:
         Plotly figure
     """
+    # Check if we have geometry data
+    has_geometry = 'geometry' in gdf.columns and gdf['geometry'].notna().any()
+    
+    if not has_geometry:
+        # Fallback to scatter map if no geometry available
+        return create_simple_scatter_map(df_month, gdf, selected_provinces)
+    
     # Filter GeoDataFrame to selected provinces
     gdf_filtered = gdf[gdf['province_id'].isin(selected_provinces)].copy()
     
@@ -78,7 +86,11 @@ def create_choropleth_map(df_month, gdf, selected_provinces):
             merged[f'denv{i}_share'] = 0
     
     # Convert GeoDataFrame to GeoJSON for Plotly
-    geojson_dict = json.loads(gdf_filtered.to_json())
+    try:
+        geojson_dict = json.loads(gdf_filtered.to_json())
+    except:
+        # If conversion fails, use scatter map
+        return create_simple_scatter_map(df_month, gdf, selected_provinces)
     
     # Create hover text
     merged['hover_text'] = merged.apply(
@@ -276,7 +288,6 @@ def main():
         margin-bottom: 0.5rem;
     }
     .ksp-item {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         padding: 0.75rem 1.5rem;
         border-radius: 25px;
@@ -284,6 +295,16 @@ def main():
         text-align: center;
         display: block;
         white-space: nowrap;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    .ksp-serotypes {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    .ksp-climate {
+        background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    }
+    .ksp-forecast {
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     }
     .status-badge {
         display: inline-block;
@@ -313,13 +334,13 @@ def main():
     ksp_col1, ksp_col2, ksp_col3 = st.columns(3)
     
     with ksp_col1:
-        st.markdown('<div class="ksp-item">🧬 Serotypes/Lineages</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ksp-item ksp-serotypes">🧬 Serotypes/Lineages</div>', unsafe_allow_html=True)
     
     with ksp_col2:
-        st.markdown('<div class="ksp-item">🌡️ Climate Correlation</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ksp-item ksp-climate">🌡️ Climate Correlation</div>', unsafe_allow_html=True)
     
     with ksp_col3:
-        st.markdown('<div class="ksp-item">📈 Forecast Models</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ksp-item ksp-forecast">📈 Forecast Models</div>', unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)  # Add spacing after KSPs
     
@@ -783,7 +804,7 @@ def main():
                         phylo_img_path = Path(__file__).parent.parent / "assets" / "phylo_placeholder.png"
                         if phylo_img_path.exists():
                             img = Image.open(phylo_img_path)
-                            st.image(img, caption="Phylogenetic Tree Visualization (Placeholder)", use_container_width=True)
+                            st.image(img, caption="Phylogenetic Tree Visualization (Placeholder)", width='stretch')
                         else:
                             st.info("Phylogenetic tree visualization will appear here")
                     except:
@@ -904,7 +925,7 @@ def main():
     
     # Footer
     st.divider()
-    st.caption("GeneTropica MVP - Version 0.1.0 | Developed by Russell Young | Data updated through mock generation")
+    st.caption("GeneTropica MVP - Version 0.1.0 | Developed by Russell Young | Data updated through mock generation - September 2025")
 
 
 if __name__ == "__main__":

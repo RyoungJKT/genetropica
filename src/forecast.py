@@ -54,17 +54,17 @@ def make_forecast(df: pd.DataFrame,
     monthly[f'rainfall_lag{rainfall_lag}'] = monthly['rainfall_mm'].shift(rainfall_lag)
     
     # Prepare training data (remove NaN from lag)
-    train_data = monthly.dropna()
+    train_data = monthly.dropna().copy()  # Use .copy() to avoid SettingWithCopyWarning
     
     if len(train_data) < 6:
         # Not enough data after lag
         return _make_simple_forecast(monthly, horizon_months)
     
     # Calculate seasonal baseline for each observation
-    train_data['seasonal_baseline'] = train_data['month'].map(seasonal_pattern)
+    train_data.loc[:, 'seasonal_baseline'] = train_data['month'].map(seasonal_pattern)
     
     # Calculate deseasonalized cases
-    train_data['cases_deseasonalized'] = train_data['cases'] - train_data['seasonal_baseline']
+    train_data.loc[:, 'cases_deseasonalized'] = train_data['cases'] - train_data['seasonal_baseline']
     
     # Fit linear regression on deseasonalized cases vs lagged rainfall
     X = sm.add_constant(train_data[f'rainfall_lag{rainfall_lag}'])
@@ -73,9 +73,9 @@ def make_forecast(df: pd.DataFrame,
     try:
         model = sm.OLS(y, X).fit()
         
-        # Get model parameters
-        intercept = model.params[0] if len(model.params) > 0 else 0
-        beta_rainfall = model.params[1] if len(model.params) > 1 else 0
+        # Get model parameters using iloc for position-based indexing
+        intercept = model.params.iloc[0] if len(model.params) > 0 else 0
+        beta_rainfall = model.params.iloc[1] if len(model.params) > 1 else 0
         
         # Calculate residual standard error for prediction intervals
         residual_std = np.sqrt(model.mse_resid)

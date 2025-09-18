@@ -13,3 +13,16 @@ textColor = "#262730"
 
 # Font family for all text
 font = "sans serif"
+
+[server]
+# Port configuration (optional, Streamlit Cloud handles this)
+headless = true
+port = 8501
+
+[browser]
+# Gather usage stats (optional)
+gatherUsageStats = false
+
+[client]
+# Show error details in the browser
+showErrorDetails = true

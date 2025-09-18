@@ -16,7 +16,7 @@ GeneTropica is an open-source dashboard that combines dengue serotype distributi
 ### Screenshots
 
 ![Map View](docs/screenshots/map_view.png)
-*Interactive choropleth map showing dominant dengue serotypes by province*
+*Interactive bubble map showing dominant dengue serotypes by province*
 
 ![Trends Analysis](docs/screenshots/trends_view.png)
 *Serotype composition over time and climate correlation analysis*
@@ -26,7 +26,7 @@ GeneTropica is an open-source dashboard that combines dengue serotype distributi
 
 ## Quick Start
 
-### Installation
+### Installation (Local)
 
 ```bash
 # Clone repository
@@ -45,6 +45,35 @@ streamlit run app/app.py
 ```
 
 The app opens at `http://localhost:8501`
+
+### Deployment (Streamlit Community Cloud)
+
+Deploy your own instance in 3 minutes:
+
+1. **Fork this repository** to your GitHub account
+
+2. **Go to** [share.streamlit.io](https://share.streamlit.io)
+
+3. **Click "New app"** and connect your GitHub account
+
+4. **Configure deployment:**
+   - Repository: `your-username/genetropica`
+   - Branch: `main`
+   - Main file path: `app/app.py`
+
+5. **Click "Deploy"** and wait ~2 minutes
+
+Your app will be live at `https://your-app-name.streamlit.app`
+
+#### Cloud Limitations
+
+The Streamlit Cloud version runs with simplified features:
+- ✅ All visualizations work (bubble map recommended)
+- ✅ Mock data is pre-generated
+- ⚠️ GeoPandas features degraded to basic functionality
+- ⚠️ Maximum 1GB memory on free tier
+
+For full functionality, use local installation with conda environment.
 
 ## Mock vs Real Data
 

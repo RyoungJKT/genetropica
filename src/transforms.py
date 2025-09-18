@@ -6,11 +6,18 @@ Includes cached data loaders and filtering functions.
 
 import pandas as pd
 import numpy as np
-import geopandas as gpd
+import streamlit as st
 from typing import Optional, List, Union, Dict, Tuple
 from pathlib import Path
-import streamlit as st
 import json
+
+# Handle optional geopandas import for cloud deployment
+try:
+    import geopandas as gpd
+    GEOPANDAS_AVAILABLE = True
+except ImportError:
+    GEOPANDAS_AVAILABLE = False
+    print("GeoPandas not available - using simplified features")
 
 
 # Color palette for serotypes
@@ -23,34 +30,50 @@ SEROTYPE_PALETTE = {
 
 
 @st.cache_data(ttl=3600)
-def load_geo() -> gpd.GeoDataFrame:
+def load_geo():
     """
-    Load provinces GeoJSON as a GeoDataFrame with correct dtypes.
+    Load provinces GeoJSON. Falls back to simplified data if GeoPandas unavailable.
     Cached for 1 hour.
     
     Returns:
-        gpd.GeoDataFrame: Provinces with geometry and metadata
+        DataFrame or GeoDataFrame: Provinces with geometry and metadata
     """
     # Get path to mock data
     data_path = Path(__file__).parent.parent / "data" / "mock" / "provinces.geojson"
     
-    # Load GeoJSON
-    gdf = gpd.read_file(str(data_path))
-    
-    # Ensure correct dtypes
-    gdf['province_id'] = gdf['province_id'].astype(str)
-    gdf['province_name'] = gdf['province_name'].astype(str)
-    gdf['lon'] = gdf['lon'].astype(float)
-    gdf['lat'] = gdf['lat'].astype(float)
-    
-    # Quick checks
-    assert len(gdf) > 0, "No provinces loaded"
-    assert gdf['province_id'].notna().all(), "Missing province_id values"
-    assert gdf['province_name'].notna().all(), "Missing province_name values"
-    assert gdf.geometry.notna().all(), "Missing geometry values"
-    # Check: len(gdf) = 6 provinces, no null geometries
-    
-    return gdf
+    if GEOPANDAS_AVAILABLE:
+        # Load as GeoDataFrame when geopandas is available
+        gdf = gpd.read_file(str(data_path))
+        
+        # Ensure correct dtypes
+        gdf['province_id'] = gdf['province_id'].astype(str)
+        gdf['province_name'] = gdf['province_name'].astype(str)
+        gdf['lon'] = gdf['lon'].astype(float)
+        gdf['lat'] = gdf['lat'].astype(float)
+        
+        # Quick checks
+        assert len(gdf) > 0, "No provinces loaded"
+        assert gdf['province_id'].notna().all(), "Missing province_id values"
+        assert gdf['province_name'].notna().all(), "Missing province_name values"
+        
+        return gdf
+    else:
+        # Fallback: Create a simple DataFrame with province data
+        provinces_data = {
+            'province_id': ['DKI', 'JABAR', 'JATENG', 'JATIM', 'BANTEN', 'DIY'],
+            'province_name': ['DKI Jakarta', 'West Java', 'Central Java', 'East Java', 'Banten', 'Yogyakarta'],
+            'lon': [106.8456, 107.6098, 110.4203, 112.6349, 106.0640, 110.3695],
+            'lat': [-6.2088, -6.9147, -7.1506, -7.5361, -6.4058, -7.7956],
+            'geometry': [None] * 6  # Simplified - no actual geometry
+        }
+        
+        df = pd.DataFrame(provinces_data)
+        df['province_id'] = df['province_id'].astype(str)
+        df['province_name'] = df['province_name'].astype(str)
+        df['lon'] = df['lon'].astype(float)
+        df['lat'] = df['lat'].astype(float)
+        
+        return df
 
 
 @st.cache_data(ttl=3600)
